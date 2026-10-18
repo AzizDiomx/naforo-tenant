@@ -1,15 +1,29 @@
+const isBrowser = typeof window !== 'undefined';
+const isLocalhost = isBrowser && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
 export const API_BASE_URL: string = (
-  import.meta.env.VITE_API_BASE_URL ||
-  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:3000/api/v1'
-    : 'https://api.naforo.company/api/v1')
+  (!isLocalhost && isBrowser)
+    ? (import.meta.env.VITE_API_BASE_URL && !import.meta.env.VITE_API_BASE_URL.includes('localhost')
+        ? import.meta.env.VITE_API_BASE_URL
+        : 'https://backend.naforo.company/api/v1')
+    : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1')
 ).replace(/\/+$/, '');
 
 export const API_ORIGIN: string = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
 
 export function getFileUrl(path?: string | null): string {
   if (!path) return '';
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (path.startsWith('http://localhost:3000') || path.startsWith('http://127.0.0.1:3000') || path.includes('localhost:3000')) {
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      return path.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, API_ORIGIN);
+    }
+  }
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && (path.includes('localhost') || path.includes('127.0.0.1'))) {
+      return path.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, API_ORIGIN);
+    }
+    return path;
+  }
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${API_ORIGIN}${cleanPath}`;
 }
