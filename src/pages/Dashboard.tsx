@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Calendar, ShieldCheck, FileText, Wrench, CheckCircle2, ChevronRight, X, Upload, Loader2, AlertCircle, Phone, MessageSquare, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { fetchApi, uploadApi } from '../lib/api';
+import { useTenantFeatures } from '../lib/useTenantFeatures';
 
 export default function Dashboard() {
+  const { hasChat: featuresHasChat } = useTenantFeatures();
   const [showPayModal, setShowPayModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'orange_money' | 'mtn_money' | 'wave' | 'bank_transfer' | 'cash'>('wave');
   const [transactionNumber, setTransactionNumber] = useState('');
@@ -85,6 +87,7 @@ export default function Dashboard() {
   const profile = data?.profile;
   const dueInvoice = data?.dueInvoice;
   const recentPayments = data?.recentPayments || [];
+  const hasChat = Boolean(data?.organization?.hasChat ?? featuresHasChat);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -225,7 +228,7 @@ export default function Dashboard() {
       )}
 
       {/* Quick Action Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: hasChat ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)', gap: 10 }}>
         <Link to="/receipts" style={{ textDecoration: 'none' }}>
           <div style={{
             backgroundColor: '#ffffff',
@@ -249,29 +252,31 @@ export default function Dashboard() {
           </div>
         </Link>
 
-        <Link to="/chat" style={{ textDecoration: 'none' }}>
-          <div style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #a7f3d0',
-            borderRadius: '16px',
-            padding: '14px 10px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textAlign: 'center',
-            gap: 8,
-            boxShadow: '0 2px 8px rgba(1, 62, 55, 0.05)',
-            background: 'linear-gradient(180deg, #ffffff, #f0fdf4)'
-          }}>
-            <div style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: '#013E37', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }}>
-              <MessageSquare size={18} />
+        {hasChat && (
+          <Link to="/chat" style={{ textDecoration: 'none' }}>
+            <div style={{
+              backgroundColor: '#ffffff',
+              border: '1px solid #a7f3d0',
+              borderRadius: '16px',
+              padding: '14px 10px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              gap: 8,
+              boxShadow: '0 2px 8px rgba(1, 62, 55, 0.05)',
+              background: 'linear-gradient(180deg, #ffffff, #f0fdf4)'
+            }}>
+              <div style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: '#013E37', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }}>
+                <MessageSquare size={18} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.78rem', fontWeight: '700', color: '#013E37' }}>Mon Bailleur</div>
+                <div style={{ fontSize: '0.68rem', color: '#059669' }}>Messagerie direct</div>
+              </div>
             </div>
-            <div>
-              <div style={{ fontSize: '0.78rem', fontWeight: '700', color: '#013E37' }}>Mon Bailleur</div>
-              <div style={{ fontSize: '0.68rem', color: '#059669' }}>Messagerie direct</div>
-            </div>
-          </div>
-        </Link>
+          </Link>
+        )}
 
         <Link to="/incidents" style={{ textDecoration: 'none' }}>
           <div style={{

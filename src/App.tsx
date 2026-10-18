@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import Chat from './pages/Chat';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
+import { useTenantFeatures } from './lib/useTenantFeatures';
 import './styles/tenant.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -37,6 +38,25 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function ChatRouteGuard() {
+  const { hasChat, loading } = useTenantFeatures();
+  const hasCached = Boolean(localStorage.getItem('tenant_features'));
+
+  if (loading && !hasCached) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', color: '#64748b' }}>
+        <span>Vérification des accès...</span>
+      </div>
+    );
+  }
+
+  if (!hasChat) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Chat />;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -54,7 +74,7 @@ export default function App() {
                   <Route path="/receipts" element={<Receipts />} />
                   <Route path="/incidents" element={<Incidents />} />
                   <Route path="/documents" element={<Documents />} />
-                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/chat" element={<ChatRouteGuard />} />
                   <Route path="/profile" element={<Profile />} />
                 </Routes>
               </AppLayout>

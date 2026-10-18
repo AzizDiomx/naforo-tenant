@@ -1,21 +1,25 @@
 import { useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, CreditCard, FileCheck2, AlertTriangle, MessageSquare, User } from 'lucide-react';
-
-const navItems = [
-  { path: '/', label: 'Accueil', icon: Home },
-  { path: '/payments', label: 'Loyer', icon: CreditCard },
-  { path: '/receipts', label: 'Quittances', icon: FileCheck2 },
-  { path: '/chat', label: 'Tchat', icon: MessageSquare },
-  { path: '/incidents', label: 'Incidents', icon: AlertTriangle },
-  { path: '/profile', label: 'Profil', icon: User },
-];
+import { useTenantFeatures } from '../../lib/useTenantFeatures';
 
 export default function BottomNav() {
   const location = useLocation();
+  const { hasChat } = useTenantFeatures();
+
+  const allNavItems = [
+    { path: '/', label: 'Accueil', icon: Home },
+    { path: '/payments', label: 'Loyer', icon: CreditCard },
+    { path: '/receipts', label: 'Quittances', icon: FileCheck2 },
+    { path: '/chat', label: 'Tchat', icon: MessageSquare, requiresChat: true },
+    { path: '/incidents', label: 'Incidents', icon: AlertTriangle },
+    { path: '/profile', label: 'Profil', icon: User },
+  ];
+
+  const navItems = allNavItems.filter((item) => !item.requiresChat || hasChat);
 
   return (
-    <nav className="bottom-nav">
+    <nav className="bottom-nav" style={{ gridTemplateColumns: `repeat(${navItems.length}, 1fr)` }}>
       {navItems.map((item) => {
         const isActive = location.pathname === item.path;
         const Icon = item.icon;
