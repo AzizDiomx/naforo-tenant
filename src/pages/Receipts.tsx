@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Download, ShieldCheck, Loader2 } from 'lucide-react';
-import { fetchApi } from '../lib/api';
+import { fetchApi, getFileUrl } from '../lib/api';
 
 export default function Receipts() {
   const [receipts, setReceipts] = useState<any[]>([]);
@@ -104,7 +104,7 @@ export default function Receipts() {
 
                 {r.pdfUrl ? (
                   <a
-                    href={`http://localhost:3000${r.pdfUrl.startsWith('/') ? '' : '/'}${r.pdfUrl}`}
+                    href={getFileUrl(r.pdfUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{

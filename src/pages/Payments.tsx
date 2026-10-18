@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Clock, CreditCard, Loader2, AlertCircle, Upload, Eye, FileText, ArrowRight } from 'lucide-react';
-import { fetchApi, uploadApi } from '../lib/api';
+import { fetchApi, uploadApi, getFileUrl } from '../lib/api';
 
 export default function Payments() {
   const [tab, setTab] = useState<'all' | 'pending'>('all');
@@ -176,7 +176,7 @@ export default function Payments() {
 
                 {p.proofUrl ? (
                   <a
-                    href={`http://localhost:3000${p.proofUrl.startsWith('/') ? '' : '/'}${p.proofUrl}`}
+                    href={getFileUrl(p.proofUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{

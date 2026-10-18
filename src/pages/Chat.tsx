@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { MessageSquare, Send, Loader2, Lock, Edit2, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { fetchApi } from '../lib/api';
+import { fetchApi, API_ORIGIN } from '../lib/api';
 import { io, Socket } from 'socket.io-client';
 
 export default function Chat() {
@@ -29,7 +29,7 @@ export default function Chat() {
     }
 
     // 1. Initialize WebSocket Connection
-    const socket = io('http://localhost:3000', {
+    const socket = io(API_ORIGIN, {
       auth: { token },
       transports: ['websocket'],
     });
