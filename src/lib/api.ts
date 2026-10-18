@@ -28,8 +28,37 @@ export function getFileUrl(path?: string | null): string {
   return `${API_ORIGIN}${cleanPath}`;
 }
 
+async function refreshToken(): Promise<string | null> {
+  const refresh = localStorage.getItem('tenant_refresh_token');
+  if (!refresh) return null;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/refresh-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: refresh }),
+    });
+
+    if (!res.ok) throw new Error();
+    const json = await res.json();
+    if (json.success && json.data.accessToken) {
+      localStorage.setItem('tenant_token', json.data.accessToken);
+      if (json.data.refreshToken) {
+        localStorage.setItem('tenant_refresh_token', json.data.refreshToken);
+      }
+      return json.data.accessToken;
+    }
+  } catch {
+    localStorage.removeItem('tenant_token');
+    localStorage.removeItem('tenant_refresh_token');
+    localStorage.removeItem('tenant_user');
+    return null;
+  }
+  return null;
+}
+
 export async function fetchApi<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem('tenant_token');
+  let token = localStorage.getItem('tenant_token');
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -39,17 +68,30 @@ export async function fetchApi<T = any>(endpoint: string, options: RequestInit =
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  let response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
     credentials: 'include',
   });
+
+  if (response.status === 401) {
+    const newToken = await refreshToken();
+    if (newToken) {
+      headers['Authorization'] = `Bearer ${newToken}`;
+      response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers,
+        credentials: 'include',
+      });
+    }
+  }
 
   const data = await response.json().catch(() => ({}));
 
   if (response.status === 401) {
     // Session token expired or invalidated by server
     localStorage.removeItem('tenant_token');
+    localStorage.removeItem('tenant_refresh_token');
     localStorage.removeItem('tenant_user');
     if (window.location.pathname !== '/login') {
       window.location.href = '/login';
@@ -65,25 +107,39 @@ export async function fetchApi<T = any>(endpoint: string, options: RequestInit =
 }
 
 export async function uploadApi<T = any>(endpoint: string, formData: FormData): Promise<T> {
-  const token = localStorage.getItem('tenant_token');
+  let token = localStorage.getItem('tenant_token');
   const headers: Record<string, string> = {};
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  let response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
     body: formData,
     headers,
     credentials: 'include',
   });
 
+  if (response.status === 401) {
+    const newToken = await refreshToken();
+    if (newToken) {
+      headers['Authorization'] = `Bearer ${newToken}`;
+      response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        body: formData,
+        headers,
+        credentials: 'include',
+      });
+    }
+  }
+
   const data = await response.json().catch(() => ({}));
 
   if (response.status === 401) {
     // Session token expired or invalidated
     localStorage.removeItem('tenant_token');
+    localStorage.removeItem('tenant_refresh_token');
     localStorage.removeItem('tenant_user');
     if (window.location.pathname !== '/login') {
       window.location.href = '/login';

@@ -16,6 +16,7 @@ export default function Chat() {
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
+  const threadRef = useRef<any>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -31,12 +32,18 @@ export default function Chat() {
     // 1. Initialize WebSocket Connection
     const socket = io(API_ORIGIN, {
       auth: { token },
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
     });
     socketRef.current = socket;
 
     socket.on('connect', () => {
       console.log('Chat WebSocket connecté');
+      if (threadRef.current?.id) {
+        socket.emit('chat:join_thread', threadRef.current.id);
+      }
     });
 
     socket.on('chat:message', (data: any) => {
@@ -61,6 +68,7 @@ export default function Chat() {
     fetchApi('/chat/tenant-thread')
       .then(res => {
         setThread(res);
+        threadRef.current = res;
         if (socketRef.current) {
           socketRef.current.emit('chat:join_thread', res.id);
         }

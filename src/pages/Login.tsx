@@ -32,7 +32,7 @@ export default function Login() {
       }
 
       // Store JWT token for tenant API calls
-      const { accessToken, user } = data.data;
+      const { accessToken, refreshToken, user } = data.data;
 
       // Verify that the user has tenant or appropriate access
       if (user.role !== 'tenant' && user.role !== 'admin' && user.role !== 'manager' && user.role !== 'owner' && user.role !== 'super_admin') {
@@ -40,6 +40,9 @@ export default function Login() {
       }
 
       localStorage.setItem('tenant_token', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('tenant_refresh_token', refreshToken);
+      }
       localStorage.setItem('tenant_user', JSON.stringify(user));
 
       // Redirect to tenant mobile dashboard
